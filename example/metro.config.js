@@ -13,13 +13,13 @@ config.resolver.blockList = new RegExp(
 );
 
 const LIBRARY_ENTRIES = {
-  '@scanner/react-native-collapsible-tabs': path.join(root, 'src', 'index.ts'),
-  '@scanner/react-native-collapsible-tabs/flash-list': path.join(
+  'react-native-collapsible-tab': path.join(root, 'src', 'index.ts'),
+  'react-native-collapsible-tab/flash-list': path.join(
     root,
     'src',
     'flash-list.ts',
   ),
-  '@scanner/react-native-collapsible-tabs/legend-list': path.join(
+  'react-native-collapsible-tab/legend-list': path.join(
     root,
     'src',
     'legend-list.ts',

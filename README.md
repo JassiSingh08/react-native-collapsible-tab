@@ -1,11 +1,11 @@
-# @scanner/react-native-collapsible-tabs
+# react-native-collapsible-tab
 
 Collapsible header tab view for React Native — with **per-tab scroll memory**, a **jump-free header**, and first-class adapters for **FlatList, ScrollView, SectionList, FlashList v2 and LegendList**.
 
 Built on `react-native-reanimated`, `react-native-gesture-handler` and `react-native-pager-view`. All animation runs on the UI thread. Works with Reanimated **3 and 4**, old and New Architecture (FlashList adapter requires New Architecture), and Expo (including Expo Go).
 
 ```tsx
-import { Tabs } from '@scanner/react-native-collapsible-tabs';
+import { Tabs } from 'react-native-collapsible-tab';
 
 <Tabs.Container renderHeader={() => <MyHeader />}>
   <Tabs.Tab name="posts" label="Posts">
@@ -50,7 +50,7 @@ Pain points of `react-native-collapsible-tab-view` this library fixes or avoids 
 ## Installation
 
 ```sh
-npm install @scanner/react-native-collapsible-tabs
+npm install react-native-collapsible-tab
 # peer dependencies (you likely have them):
 npx expo install react-native-reanimated react-native-gesture-handler react-native-pager-view
 ```
@@ -69,7 +69,7 @@ Your app must be wrapped in `<GestureHandlerRootView>` (Expo Router does this fo
 ## Quick start
 
 ```tsx
-import { Tabs } from '@scanner/react-native-collapsible-tabs';
+import { Tabs } from 'react-native-collapsible-tab';
 
 function Profile() {
   return (
@@ -99,8 +99,8 @@ function Profile() {
 FlashList / LegendList come from subpath exports so the packages stay optional:
 
 ```tsx
-import { TabFlashList } from '@scanner/react-native-collapsible-tabs/flash-list';
-import { TabLegendList } from '@scanner/react-native-collapsible-tabs/legend-list';
+import { TabFlashList } from 'react-native-collapsible-tab/flash-list';
+import { TabLegendList } from 'react-native-collapsible-tab/legend-list';
 ```
 
 ## API
@@ -144,8 +144,8 @@ Drop-in replacements, same props as the underlying component (minus `onScroll`, 
 - `Tabs.ScrollView`
 - `Tabs.FlatList`
 - `Tabs.SectionList`
-- `TabFlashList` from `@scanner/react-native-collapsible-tabs/flash-list` — FlashList **v2** (New Architecture only). `maintainVisibleContentPosition` is disabled by default (it issues animated corrective scrolls that fight tab-switch sync); pass your own to opt back in.
-- `TabLegendList` from `@scanner/react-native-collapsible-tabs/legend-list`
+- `TabFlashList` from `react-native-collapsible-tab/flash-list` — FlashList **v2** (New Architecture only). `maintainVisibleContentPosition` is disabled by default (it issues animated corrective scrolls that fight tab-switch sync); pass your own to opt back in.
+- `TabLegendList` from `react-native-collapsible-tab/legend-list`
 
 Each adapter automatically: pads content below the header + tab bar, guarantees short content can still fully collapse the header, restores saved offsets when a lazy tab mounts, sets sensible `scrollIndicatorInsets` / `progressViewOffset`, and feeds the header collapse + snap logic.
 

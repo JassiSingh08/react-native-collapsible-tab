@@ -1,5 +1,5 @@
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { Tabs } from '@scanner/react-native-collapsible-tabs';
+import { Tabs } from 'react-native-collapsible-tab';
 import { ExampleHeader, makeItems, Row, type Item } from '../shared';
 
 const items = makeItems(50);

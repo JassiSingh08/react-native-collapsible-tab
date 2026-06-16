@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { Tabs } from '@scanner/react-native-collapsible-tabs';
-import { TabFlashList } from '@scanner/react-native-collapsible-tabs/flash-list';
-import { TabLegendList } from '@scanner/react-native-collapsible-tabs/legend-list';
+import { Tabs } from 'react-native-collapsible-tab';
+import { TabFlashList } from 'react-native-collapsible-tab/flash-list';
+import { TabLegendList } from 'react-native-collapsible-tab/legend-list';
 import { ExampleHeader, makeItems, Row, type Item } from '../shared';
 
 const long = makeItems(500);

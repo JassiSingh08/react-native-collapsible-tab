@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   Tabs,
   type TabBarRenderProps,
-} from '@scanner/react-native-collapsible-tabs';
+} from 'react-native-collapsible-tab';
 import { ExampleHeader, makeItems, Row, type Item } from '../shared';
 
 const items = makeItems(40);

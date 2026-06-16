@@ -137,7 +137,7 @@ function extractTabs(children: ReactNode): ReactElement<TabProps>[] {
       out.push(child as ReactElement<TabProps>);
     } else if (__DEV__) {
       console.warn(
-        '[@scanner/react-native-collapsible-tabs] Ignored a Container child without a string `name` prop. ' +
+        '[react-native-collapsible-tab] Ignored a Container child without a string `name` prop. ' +
           'Every child must be a <Tabs.Tab name="..."> (or forward a `name` prop).',
       );
     }
@@ -147,7 +147,7 @@ function extractTabs(children: ReactNode): ReactElement<TabProps>[] {
     for (const tab of out) {
       if (seen.has(tab.props.name)) {
         console.warn(
-          `[@scanner/react-native-collapsible-tabs] Duplicate tab name "${tab.props.name}" — names must be unique.`,
+          `[react-native-collapsible-tab] Duplicate tab name "${tab.props.name}" — names must be unique.`,
         );
       }
       seen.add(tab.props.name);

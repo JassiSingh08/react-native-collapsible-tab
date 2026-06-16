@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
-import { useCollapseProgress } from '@scanner/react-native-collapsible-tabs';
+import { useCollapseProgress } from 'react-native-collapsible-tab';
 
 export type Item = { id: string; title: string; color: string };
 

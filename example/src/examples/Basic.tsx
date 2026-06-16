@@ -1,4 +1,4 @@
-import { Tabs } from '@scanner/react-native-collapsible-tabs';
+import { Tabs } from 'react-native-collapsible-tab';
 import { AboutContent, ExampleHeader, makeItems, Row, type Item } from '../shared';
 
 const posts = makeItems(60, 'Post');

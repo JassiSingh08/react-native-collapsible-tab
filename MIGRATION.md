@@ -6,14 +6,14 @@ Most code maps one-to-one. The biggest behavioral difference is an upgrade: tab 
 
 ```diff
 -import { Tabs, MaterialTabBar } from 'react-native-collapsible-tab-view';
-+import { Tabs, DefaultTabBar } from '@scanner/react-native-collapsible-tabs';
++import { Tabs, DefaultTabBar } from 'react-native-collapsible-tab';
 ```
 
 FlashList moves to a subpath (and requires FlashList v2 / New Architecture):
 
 ```diff
 -<Tabs.FlashList ... />
-+import { TabFlashList } from '@scanner/react-native-collapsible-tabs/flash-list';
++import { TabFlashList } from 'react-native-collapsible-tab/flash-list';
 +<TabFlashList ... />
 ```
 

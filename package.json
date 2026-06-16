@@ -1,18 +1,15 @@
 {
-  "name": "@scanner/react-native-collapsible-tabs",
+  "name": "react-native-collapsible-tab",
   "version": "0.1.0",
   "description": "Collapsible header tab view for React Native with per-tab scroll memory and a jump-free header. First-class FlatList, ScrollView, SectionList, FlashList v2 and LegendList support.",
   "author": "Jassi Singh (https://github.com/JassiSingh08)",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/JassiSingh08/react-native-collapsible-tabs.git"
+    "url": "git+https://github.com/JassiSingh08/react-native-collapsible-tab.git"
   },
-  "homepage": "https://github.com/JassiSingh08/react-native-collapsible-tabs#readme",
+  "homepage": "https://github.com/JassiSingh08/react-native-collapsible-tab#readme",
   "bugs": {
-    "url": "https://github.com/JassiSingh08/react-native-collapsible-tabs/issues"
-  },
-  "publishConfig": {
-    "access": "public"
+    "url": "https://github.com/JassiSingh08/react-native-collapsible-tab/issues"
   },
   "source": "./src/index.ts",
   "main": "./lib/commonjs/index.js",

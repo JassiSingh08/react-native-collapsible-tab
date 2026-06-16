@@ -49,8 +49,8 @@ export {
  *   </Tabs.Container>
  *
  * FlashList and LegendList adapters live in subpath exports so the packages
- * stay optional: `@scanner/react-native-collapsible-tabs/flash-list` and
- * `@scanner/react-native-collapsible-tabs/legend-list`.
+ * stay optional: `react-native-collapsible-tab/flash-list` and
+ * `react-native-collapsible-tab/legend-list`.
  */
 export const Tabs = {
   Container,

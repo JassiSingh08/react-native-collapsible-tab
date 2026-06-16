@@ -61,12 +61,12 @@ const EXAMPLES: Example[] = [
   },
   {
     title: 'FlashList v2',
-    subtitle: '@scanner/react-native-collapsible-tabs/flash-list',
+    subtitle: 'react-native-collapsible-tab/flash-list',
     component: FlashListExample,
   },
   {
     title: 'LegendList',
-    subtitle: '@scanner/react-native-collapsible-tabs/legend-list',
+    subtitle: 'react-native-collapsible-tab/legend-list',
     component: LegendListExample,
   },
 ];
@@ -74,7 +74,7 @@ const EXAMPLES: Example[] = [
 function Home({ onSelect }: { onSelect: (example: Example) => void }) {
   return (
     <View style={styles.home}>
-      <Text style={styles.homeTitle}>@scanner/react-native-collapsible-tabs</Text>
+      <Text style={styles.homeTitle}>react-native-collapsible-tab</Text>
       <Text style={styles.homeSubtitle}>Pick an example</Text>
       {EXAMPLES.map((example) => (
         <Pressable
