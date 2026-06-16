@@ -1,0 +1,12 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@scanner/react-native-collapsible-tabs": ["../src/index.ts"],
+      "@scanner/react-native-collapsible-tabs/flash-list": ["../src/flash-list.ts"],
+      "@scanner/react-native-collapsible-tabs/legend-list": ["../src/legend-list.ts"]
+    }
+  },
+  "include": ["src", "index.js"]
+}

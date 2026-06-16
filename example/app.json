@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "Collapsing Tabs Example",
+    "slug": "react-native-collapsing-tabs-example",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "edgeToEdgeEnabled": true
+    }
+  }
+}
