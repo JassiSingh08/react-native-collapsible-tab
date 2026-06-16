@@ -2,6 +2,13 @@
 
 Collapsible header tab view for React Native — with **per-tab scroll memory**, a **jump-free header**, and first-class adapters for **FlatList, ScrollView, SectionList, FlashList v2 and LegendList**.
 
+## Demo
+
+> Same gesture, same frame — iOS and Android side by side.
+
+https://github.com/user-attachments/assets/f7fdfd2b-8899-4192-9343-120e3c7b505b
+
+
 Built on `react-native-reanimated`, `react-native-gesture-handler` and `react-native-pager-view`. All animation runs on the UI thread. Works with Reanimated **3 and 4**, old and New Architecture (FlashList adapter requires New Architecture), and Expo (including Expo Go).
 
 ```tsx
