@@ -190,6 +190,39 @@ The example resolves the library from `../src` via Metro config, so library edit
 
 **Sticky section headers** stick to the real viewport top, which sits under the collapsible header until it collapses. This matches native sticky behavior; design section headers with that in mind.
 
+**Sticky / pinned header content.** A custom header animation should fade or scale **in place** — don't translate header content *upward* as it collapses, or it rides past `minHeaderHeight` into the safe-area / status-bar region and overlaps it. Likewise, content that must stay visible while the header collapses (a reading-progress bar, a search field) belongs in the **tab bar** (`renderTabBar`), not the header — the header scrolls away, the tab bar stays pinned.
+
+**Gotcha — scroll offsets go negative on overscroll.** `useCurrentTabScrollY()` / `useActiveTabScrollY()` return the list's raw `contentOffset.y`, which goes **negative on iOS** when the user bounces past the top. (Android doesn't bounce — its offset stays clamped at 0, see below.) If you map a scroll offset to a width, opacity, or progress, clamp the **low** end too — not just the high end:
+
+```ts
+// ❌ negative offset → negative width; during bounce-back the bar can flash full
+width: `${Math.min((scrollY.value / TOTAL) * 100, 100)}%`
+
+// ✅ clamp both ends so overscroll reads as 0%
+width: `${Math.max(0, Math.min((scrollY.value / TOTAL) * 100, 100))}%`
+```
+
+Setting `bounces={false}` hides the symptom, but clamping is the real fix and keeps the native bounce.
+
+**Gotcha — pull-to-refresh is platform-split.** Because content is padded below the header, the native `RefreshControl` spinner renders at the content origin — tucked *behind* the header. The robust recipe differs by platform, because the two overscroll differently:
+
+- **Android** — lists don't bounce (the offset stays clamped at 0; you get a stretch/glow). An offset-driven custom pull therefore **can't** work here. Use the native `RefreshControl` and let the adapter's default `progressViewOffset` (= header height) push its spinner below the header, or set it yourself.
+- **iOS** — lists bounce, so `contentOffset.y` goes negative past the top. Read that pull distance from `useCurrentTabScrollY()` and drive your **own** spinner pinned in the visible area (below the header) — the native iOS spinner would be hidden behind the header.
+
+```tsx
+const scrollY = useCurrentTabScrollY();   // negative on iOS = pull distance
+const { height } = useHeaderMeasurements();
+
+<Tabs.FlatList
+  refreshControl={
+    Platform.OS === 'android'
+      ? <RefreshControl refreshing={busy} onRefresh={refresh}
+          progressViewOffset={height} />
+      : undefined   // iOS: render a custom spinner driven by scrollY instead
+  }
+/>
+```
+
 **Web** is not supported (react-native-pager-view is native-only).
 
 ## License

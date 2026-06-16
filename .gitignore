@@ -3,3 +3,4 @@ lib/
 .expo/
 .DS_Store
 *.log
+*.tgz
