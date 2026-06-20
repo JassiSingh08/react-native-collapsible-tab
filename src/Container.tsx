@@ -122,8 +122,38 @@ export type ContainerProps = {
     | 'onPageScroll'
     | 'onPageScrollStateChanged'
   >;
+  /**
+   * Memory cap. When set, keep only the focused tab plus `behind` tabs to its
+   * left and `ahead` to its right mounted; tabs outside the window are hidden
+   * via React's <Activity> (native views released, React state + scroll
+   * position kept for instant restore). Omit to keep every visited tab mounted
+   * (default). Requires React 19.2+ for <Activity>; on older React it warns once
+   * and falls back to keeping every visited tab mounted.
+   */
+  windowConfig?: { ahead: number; behind: number };
   children: ReactNode;
 };
+
+// React's <Activity> is stable in 19.2+ (was unstable_Activity before). When
+// absent, windowConfig can't release memory without a cold remount, so we warn
+// once and keep every tab mounted (the default behavior) instead.
+const Activity:
+  | React.ComponentType<{ mode: 'visible' | 'hidden'; children: ReactNode }>
+  | undefined =
+  (React as unknown as { Activity?: never; unstable_Activity?: never })
+    .Activity ??
+  (React as unknown as { unstable_Activity?: never }).unstable_Activity;
+
+let warnedNoActivity = false;
+function warnWindowConfigUnsupported() {
+  if (warnedNoActivity || __DEV__ === false) return;
+  warnedNoActivity = true;
+  console.warn(
+    '[react-native-collapsible-tab] windowConfig needs React 19.2+ for <Activity> ' +
+      'and is being ignored — every visited tab stays mounted. Upgrade React to ' +
+      'cap tab memory.',
+  );
+}
 
 function extractTabs(children: ReactNode): ReactElement<TabProps>[] {
   // Duck-typed on a string `name` prop rather than element type, so users can
@@ -173,6 +203,7 @@ export const Container = forwardRef<CollapsingTabsRef, ContainerProps>(
       onIndexChange,
       onTabChange,
       pagerProps,
+      windowConfig,
       children,
     },
     ref,
@@ -603,6 +634,14 @@ export const Container = forwardRef<CollapsingTabsRef, ContainerProps>(
     const pagerScrollEnabled =
       activeTabProps?.swipeEnabled ?? pagerProps?.scrollEnabled ?? true;
 
+    // Windowing only kicks in when the consumer asked for it AND <Activity> is
+    // available; otherwise warn once and behave as if windowConfig were unset.
+    let windowed = !!windowConfig;
+    if (windowed && !Activity) {
+      warnWindowConfigUnsupported();
+      windowed = false;
+    }
+
     return (
       <CollapsingTabsContext.Provider value={ctxValue}>
         <ActiveTabContext.Provider value={activeTabValue}>
@@ -631,12 +670,19 @@ export const Container = forwardRef<CollapsingTabsRef, ContainerProps>(
                     child.props;
                   const mount =
                     !(tabLazy ?? lazy) || mountedTabs.has(name);
+                  const inWindow =
+                    !windowed ||
+                    (i <= activeIndex
+                      ? activeIndex - i <= windowConfig!.behind
+                      : i - activeIndex <= windowConfig!.ahead);
                   return (
                     <View key={name} style={styles.page} collapsable={false}>
                       <TabPage
                         index={i}
                         name={name}
                         mount={mount}
+                        windowed={windowed}
+                        active={inWindow}
                         placeholder={renderLazyPlaceholder?.({
                           name,
                           index: i,

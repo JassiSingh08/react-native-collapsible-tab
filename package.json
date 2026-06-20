@@ -1,6 +1,6 @@
 {
   "name": "react-native-collapsible-tab",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Collapsible header tab view for React Native with per-tab scroll memory and a jump-free header. First-class FlatList, ScrollView, SectionList, FlashList v2 and LegendList support.",
   "author": "Jassi Singh (https://github.com/JassiSingh08)",
   "repository": {

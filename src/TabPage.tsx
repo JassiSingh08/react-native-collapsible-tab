@@ -1,4 +1,4 @@
-import { useEffect, useMemo, type ReactNode } from 'react';
+import React, { useEffect, useMemo, type ReactNode } from 'react';
 import {
   scrollTo,
   useAnimatedReaction,
@@ -11,11 +11,23 @@ import {
   type TabPageContextValue,
 } from './context';
 
+// Resolved once; Container already guards windowed against this being present,
+// so by the time `windowed` is true here, Activity is guaranteed defined.
+const Activity:
+  | React.ComponentType<{ mode: 'visible' | 'hidden'; children: ReactNode }>
+  | undefined =
+  (React as unknown as { Activity?: never }).Activity ??
+  (React as unknown as { unstable_Activity?: never }).unstable_Activity;
+
 type TabPageProps = {
   index: number;
   name: string;
   /** False while a lazy tab hasn't been focused yet — renders the placeholder instead. */
   mount: boolean;
+  /** Container has an active windowConfig (and <Activity> is available). */
+  windowed: boolean;
+  /** Whether this tab is inside the live window. Only meaningful when windowed. */
+  active: boolean;
   placeholder?: ReactNode;
   children: ReactNode;
 };
@@ -29,6 +41,8 @@ export function TabPage({
   index,
   name,
   mount,
+  windowed,
+  active,
   placeholder,
   children,
 }: TabPageProps) {
@@ -96,7 +110,13 @@ export function TabPage({
 
   return (
     <TabPageContext.Provider value={value}>
-      {mount ? children : (placeholder ?? null)}
+      {!mount ? (
+        (placeholder ?? null)
+      ) : windowed && Activity ? (
+        <Activity mode={active ? 'visible' : 'hidden'}>{children}</Activity>
+      ) : (
+        children
+      )}
     </TabPageContext.Provider>
   );
 }
