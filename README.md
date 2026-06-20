@@ -1,5 +1,8 @@
 # react-native-collapsible-tab
 
+[![npm version](https://img.shields.io/npm/v/react-native-collapsible-tab.svg)](https://www.npmjs.com/package/react-native-collapsible-tab)
+[![license](https://img.shields.io/npm/l/react-native-collapsible-tab.svg)](./LICENSE)
+
 Collapsible header tab view for React Native — with **per-tab scroll memory**, a **jump-free header**, and first-class adapters for **FlatList, ScrollView, SectionList, FlashList v2 and LegendList**.
 
 ## Demo
