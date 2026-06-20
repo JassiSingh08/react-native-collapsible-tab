@@ -1,5 +1,5 @@
 import { useState, type ComponentType } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import {
@@ -16,11 +16,16 @@ import {
   SectionListExample,
 } from './examples/Lists';
 import { RevealOnScroll, Snap } from './examples/SnapAndReveal';
+import { Windowing } from './examples/Windowing';
+import { ExploreScreen } from './realworld/ExploreScreen';
+import { ProfileScreen } from './realworld/ProfileScreen';
 
 type Example = {
   title: string;
   subtitle: string;
   component: ComponentType;
+  /** Real-world screens own their safe-area inset, so render them edge-to-edge. */
+  fullBleed?: boolean;
 };
 
 const EXAMPLES: Example[] = [
@@ -69,11 +74,31 @@ const EXAMPLES: Example[] = [
     subtitle: 'react-native-collapsible-tab/legend-list',
     component: LegendListExample,
   },
+  {
+    title: 'Windowed memory',
+    subtitle: 'windowConfig — cap mounted tabs (React 19.2+)',
+    component: Windowing,
+  },
+  {
+    title: 'Real world · Profile',
+    subtitle: 'Insets, collapsing avatar, FlashList + scroll memory',
+    component: ProfileScreen,
+    fullBleed: true,
+  },
+  {
+    title: 'Real world · Explore',
+    subtitle: 'Every hook, custom tab bar, pull-to-refresh',
+    component: ExploreScreen,
+    fullBleed: true,
+  },
 ];
 
 function Home({ onSelect }: { onSelect: (example: Example) => void }) {
   return (
-    <View style={styles.home}>
+    <ScrollView
+      contentContainerStyle={styles.home}
+      showsVerticalScrollIndicator={false}
+    >
       <Text style={styles.homeTitle}>react-native-collapsible-tab</Text>
       <Text style={styles.homeSubtitle}>Pick an example</Text>
       {EXAMPLES.map((example) => (
@@ -86,7 +111,7 @@ function Home({ onSelect }: { onSelect: (example: Example) => void }) {
           <Text style={styles.cardSubtitle}>{example.subtitle}</Text>
         </Pressable>
       ))}
-    </View>
+    </ScrollView>
   );
 }
 
@@ -95,19 +120,38 @@ function Root() {
   const [current, setCurrent] = useState<Example | null>(null);
   const Current = current?.component;
 
+  // Full-bleed screens reserve their own top inset (minHeaderHeight + padding),
+  // so the menu must NOT add paddingTop or they'd double up. We also drop the
+  // top bar there and show a floating Back chip instead, so the collapsing
+  // header runs edge to edge.
+  const fullBleed = current?.fullBleed ?? false;
+
   return (
-    <View style={[styles.root, { paddingTop: insets.top }]}>
+    <View style={[styles.root, !fullBleed && { paddingTop: insets.top }]}>
       <StatusBar style="dark" />
       {current && Current ? (
-        <>
-          <View style={styles.topBar}>
-            <Pressable hitSlop={12} onPress={() => setCurrent(null)}>
-              <Text style={styles.back}>‹ Back</Text>
+        fullBleed ? (
+          <>
+            <Current />
+            <Pressable
+              hitSlop={12}
+              onPress={() => setCurrent(null)}
+              style={[styles.floatingBack, { top: insets.top + 6 }]}
+            >
+              <Text style={styles.floatingBackText}>‹ Back</Text>
             </Pressable>
-            <Text style={styles.topBarTitle}>{current.title}</Text>
-          </View>
-          <Current />
-        </>
+          </>
+        ) : (
+          <>
+            <View style={styles.topBar}>
+              <Pressable hitSlop={12} onPress={() => setCurrent(null)}>
+                <Text style={styles.back}>‹ Back</Text>
+              </Pressable>
+              <Text style={styles.topBarTitle}>{current.title}</Text>
+            </View>
+            <Current />
+          </>
+        )
       ) : (
         <Home onSelect={setCurrent} />
       )}
@@ -127,7 +171,7 @@ export default function App() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#fff' },
-  home: { padding: 16, gap: 10 },
+  home: { padding: 16, paddingBottom: 32, gap: 10 },
   homeTitle: { fontSize: 20, fontWeight: '700', color: '#111' },
   homeSubtitle: { fontSize: 14, color: '#777', marginBottom: 8 },
   card: {
@@ -149,4 +193,19 @@ const styles = StyleSheet.create({
   },
   back: { fontSize: 16, color: '#4f46e5', fontWeight: '600' },
   topBarTitle: { fontSize: 16, fontWeight: '600', color: '#111' },
+  floatingBack: {
+    position: 'absolute',
+    left: 12,
+    zIndex: 100,
+    backgroundColor: 'rgba(255,255,255,0.92)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    shadowColor: '#000',
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
+  },
+  floatingBackText: { fontSize: 15, color: '#4f46e5', fontWeight: '700' },
 });

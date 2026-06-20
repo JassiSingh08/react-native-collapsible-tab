@@ -127,6 +127,7 @@ import { TabLegendList } from 'react-native-collapsible-tab/legend-list';
 | `renderLazyPlaceholder` | `({ name, index }) => ReactNode` | `null` | Shown for unmounted lazy tabs. |
 | `revealHeaderOnScroll` | `boolean` | `false` | Any upward scroll reveals the header immediately (Twitter-style). Default: header re-appears when content scrolls back to it. |
 | `snapThreshold` | `number \| null` | `null` | When set (0..1), a header released mid-collapse animates fully open or closed. |
+| `windowConfig` | `{ ahead, behind }` | — | Cap mounted tabs: keep only the focused tab plus `behind` left and `ahead` right; the rest hide via React's `<Activity>` (native views freed, state + scroll kept). For screens with many tabs. Needs React 19.2+ — see [Bounding tab memory](#design-notes). |
 | `onIndexChange` | `(index: number) => void` | — | Fires when a tab switch settles. |
 | `onTabChange` | `({ prevIndex, index, prevTabName, tabName }) => void` | — | Same timing, richer payload. Never fires for intermediate pages. |
 | `pagerProps` | `PagerView` props | — | Escape hatch to the underlying pager (`keyboardDismissMode`, `overdrag`, ...). |
@@ -179,7 +180,7 @@ Used when you don't pass `renderTabBar`. Accessible (`tablist`/`tab` roles, sele
 
 ## Example app
 
-The [`example/`](./example) folder is a standalone Expo app (SDK 54, New Architecture, runs in Expo Go) with one screen per feature: basic, snap, reveal-on-scroll, lazy, custom tab bar, dynamic tabs + imperative ref, SectionList, FlashList v2 and LegendList.
+The [`example/`](./example) folder is a standalone Expo app (New Architecture, runs in Expo Go) with one screen per feature: basic, snap, reveal-on-scroll, lazy, custom tab bar, dynamic tabs + imperative ref, SectionList, FlashList v2, LegendList, windowed memory (`windowConfig`), plus two **real-world screens** — a Profile (safe-area insets, collapsing avatar, FlashList with per-tab scroll memory) and an Explore feed (every hook, custom tab bar with a pinned progress bar, platform-split pull-to-refresh).
 
 ```sh
 cd example
@@ -229,6 +230,15 @@ const { height } = useHeaderMeasurements();
   }
 />
 ```
+
+**Bounding tab memory (`windowConfig`).** `lazy` defers a tab's *first* mount, but once visited a tab stays mounted for the session — fine for a handful of tabs, costly for a screen with dozens of media-heavy lists. `windowConfig={{ ahead, behind }}` caps it: only the focused tab plus `behind` tabs left and `ahead` right stay live; the rest are hidden with React's `<Activity mode="hidden">`, which tears down their **native views** (the bulk of the memory — list cells, decoded images) while keeping their **React state and scroll position** for instant restore.
+
+```tsx
+<Tabs.Container windowConfig={{ ahead: 1, behind: 1 }}>{tabs}</Tabs.Container>
+// 60 tabs, but only the focused one ±1 stay mounted
+```
+
+Use `ahead`/`behind` ≥ 1 so the swipe target is already live before the gesture finishes. The window is recomputed when a tab switch settles (not per frame), and it composes with `lazy`. `<Activity>` is stable in **React 19.2+**; on older React the prop is ignored with a one-time dev warning (every visited tab stays mounted, as before), so it's safe to set unconditionally.
 
 **Web** is not supported (react-native-pager-view is native-only).
 

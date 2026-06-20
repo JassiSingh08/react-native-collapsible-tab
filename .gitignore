@@ -4,3 +4,6 @@ lib/
 .DS_Store
 *.log
 *.tgz
+
+example/ios
+example/android
