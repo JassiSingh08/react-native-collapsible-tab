@@ -8,6 +8,7 @@ import {
 } from 'react-native-safe-area-context';
 import { Basic } from './examples/Basic';
 import { CustomTabBar } from './examples/CustomTabBar';
+import { ScrollableTabBar } from './examples/ScrollableTabBar';
 import { DynamicAndRef } from './examples/DynamicAndRef';
 import { Lazy } from './examples/Lazy';
 import {
@@ -53,6 +54,11 @@ const EXAMPLES: Example[] = [
     title: 'Custom tab bar',
     subtitle: 'renderTabBar with pill buttons',
     component: CustomTabBar,
+  },
+  {
+    title: 'Scrollable tab bar',
+    subtitle: 'Custom pill bar that auto-scrolls the active tab into view',
+    component: ScrollableTabBar,
   },
   {
     title: 'Dynamic tabs + imperative ref',
