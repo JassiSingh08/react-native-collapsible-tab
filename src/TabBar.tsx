@@ -83,9 +83,11 @@ export function DefaultTabBar({
     (index: number, e: LayoutChangeEvent) => {
       const { x, width } = e.nativeEvent.layout;
       layoutsJS.current[index] = { x, width };
-      const next = layoutsSV.value.slice();
-      next[index] = { x, width };
-      layoutsSV.value = next;
+      // Publish from the in-place ref, not a read-modify-write on layoutsSV:
+      // concurrent onLayout callbacks each slice a stale shared-value snapshot,
+      // so the write races and can drop an entry — leaving layouts.length short
+      // and the indicator pinned to its hidden branch.
+      layoutsSV.value = layoutsJS.current.slice();
     },
     [layoutsSV],
   );
@@ -102,11 +104,16 @@ export function DefaultTabBar({
   }, [activeIndex, scrollable, barWidth]);
 
   const indicatorStyle = useAnimatedStyle(() => {
+    // Reanimated locks the animated prop set on the first eval, so every branch
+    // must return the same keys. The hidden branch usually runs first (layouts
+    // arrive async after mount); if it only set opacity, width/transform would
+    // never join the set and the indicator would stay zero-width — invisible.
+    const hidden = { opacity: 0, width: 0, transform: [{ translateX: 0 }] };
     const layouts = layoutsSV.value;
     const count = tabNames.length;
-    if (layouts.length < count) return { opacity: 0 };
+    if (layouts.length < count) return hidden;
     for (let i = 0; i < count; i++) {
-      if (!layouts[i]) return { opacity: 0 };
+      if (!layouts[i]) return hidden;
     }
     const pos = Math.min(Math.max(indexDecimal.value, 0), count - 1);
     const i0 = Math.floor(pos);
