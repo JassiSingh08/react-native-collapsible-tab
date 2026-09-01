@@ -134,20 +134,21 @@ export function DefaultTabBar({
     return { opacity: 1, width, transform: [{ translateX: x }] };
   }, [tabNames.length]);
 
+  const itemStyle = [
+    styles.tab,
+    scrollable ? null : styles.tabFixed,
+    tabStyle,
+  ];
+  const rippleConfig =
+    pressColor != null || android_ripple != null
+      ? { color: pressColor, ...android_ripple }
+      : undefined;
+  const rippleActive = Platform.OS === 'android' && rippleConfig != null;
+
   const items = tabNames.map((name, i) => {
     const focused = i === activeIndex;
     const color = focused ? activeColor : inactiveColor;
     const label = tabLabels?.[name] ?? name;
-    const itemStyle = [
-      styles.tab,
-      scrollable ? null : styles.tabFixed,
-      tabStyle,
-    ];
-    const rippleConfig =
-      pressColor != null || android_ripple != null
-        ? { color: pressColor, ...android_ripple }
-        : undefined;
-    const rippleActive = Platform.OS === 'android' && rippleConfig != null;
     return (
       <Pressable
         key={name}
