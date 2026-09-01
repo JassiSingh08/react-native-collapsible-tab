@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  I18nManager,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -17,6 +18,8 @@ import Animated, {
 } from 'react-native-reanimated';
 
 type TabLayout = { x: number; width: number };
+
+const SCROLL_PADDING = 12;
 
 export type DefaultTabBarProps = {
   tabNames: string[];
@@ -74,6 +77,8 @@ export function DefaultTabBar({
   const layoutsSV = useSharedValue<TabLayout[]>([]);
   const layoutsJS = useRef<TabLayout[]>([]);
   const [barWidth, setBarWidth] = useState(0);
+  const isRTL = I18nManager.isRTL;
+  const leadingInset = scrollable ? SCROLL_PADDING : 0;
 
   const onBarLayout = useCallback((e: LayoutChangeEvent) => {
     setBarWidth(e.nativeEvent.layout.width);
@@ -121,10 +126,17 @@ export function DefaultTabBar({
     const fraction = pos - i0;
     const l0 = layouts[i0] as TabLayout;
     const l1 = layouts[i1] as TabLayout;
-    const x = l0.x + (l1.x - l0.x) * fraction;
     const width = l0.width + (l1.width - l0.width) * fraction;
-    return { opacity: 1, width, transform: [{ translateX: x }] };
-  }, [tabNames.length]);
+
+    // RTL: onLayout x is still physical-left and translateX isn't mirrored — offset from widths, then negate.
+    let lead0 = leadingInset;
+    for (let j = 0; j < i0; j++) lead0 += (layouts[j] as TabLayout).width;
+    const lead1 = i1 > i0 ? lead0 + l0.width : lead0;
+    const offset = lead0 + (lead1 - lead0) * fraction;
+    const translateX = isRTL ? -offset : offset;
+
+    return { opacity: 1, width, transform: [{ translateX }] };
+  }, [tabNames.length, isRTL, leadingInset]);
 
   const items = tabNames.map((name, i) => {
     const focused = i === activeIndex;
@@ -200,7 +212,9 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E0E0E0',
   },
   scrollContent: {
-    paddingHorizontal: 12,
+    flexGrow: 1,
+    flexDirection: 'row',
+    paddingHorizontal: SCROLL_PADDING,
   },
   fixedRow: {
     flexDirection: 'row',
@@ -220,7 +234,7 @@ const styles = StyleSheet.create({
   indicator: {
     position: 'absolute',
     bottom: 0,
-    left: 0,
+    start: 0,
     height: 2,
     borderRadius: 1,
   },
