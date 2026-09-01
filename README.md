@@ -179,7 +179,13 @@ All hooks must be used inside `<Tabs.Container>` (header, tab bar, and tab conte
 
 ### `DefaultTabBar`
 
-Used when you don't pass `renderTabBar`. Accessible (`tablist`/`tab` roles, selected state) and stylable: `scrollable` (default `true`; `false` = equal-width tabs), `backgroundColor`, `activeColor`, `inactiveColor`, `indicatorColor`, `style`, `tabStyle`, `labelStyle`, `indicatorStyle`, `renderLabel`.
+Used when you don't pass `renderTabBar`. Accessible (`tablist`/`tab` roles, selected state) and stylable: `scrollable` (default `true`; `false` = equal-width tabs), `backgroundColor`, `activeColor`, `inactiveColor`, `indicatorColor`, `pressColor`, `pressOpacity`, `android_ripple`, `style`, `tabStyle`, `labelStyle`, `indicatorStyle`, `renderLabel`.
+
+Press feedback is opt-in. `pressColor` and `android_ripple` configure the Android ripple; `pressOpacity` provides opacity feedback when no Android ripple is active. Pass these options through `renderTabBar`:
+```tsx
+renderTabBar={(props) => <DefaultTabBar {...props} pressColor="#eeeeee" />}
+```
+
 
 ## Example app
 
