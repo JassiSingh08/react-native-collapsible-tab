@@ -212,6 +212,8 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E0E0E0',
   },
   scrollContent: {
+    flexGrow: 1,
+    flexDirection: 'row',
     paddingHorizontal: SCROLL_PADDING,
   },
   fixedRow: {
