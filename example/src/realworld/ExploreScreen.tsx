@@ -131,6 +131,7 @@ function ExploreTabBar({
         ))}
       </View>
       <ScrollProgressBar />
+      <FocusedTabBar />
     </View>
   );
 }
@@ -253,7 +254,6 @@ export function ExploreScreen() {
 
   return (
     <View style={styles.root}>
-      <FocusedTabBar />
       <Tabs.Container
         minHeaderHeight={insets.top}
         headerBackgroundColor="#fff"
