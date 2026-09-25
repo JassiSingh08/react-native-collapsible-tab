@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
   type LayoutChangeEvent,
+  type PressableAndroidRippleConfig,
   type StyleProp,
   type TextStyle,
   type ViewStyle,
@@ -36,6 +38,9 @@ export type DefaultTabBarProps = {
   activeColor?: string;
   inactiveColor?: string;
   indicatorColor?: string;
+  pressColor?: string;
+  pressOpacity?: number;
+  android_ripple?: PressableAndroidRippleConfig;
   style?: StyleProp<ViewStyle>;
   tabStyle?: StyleProp<ViewStyle>;
   labelStyle?: StyleProp<TextStyle>;
@@ -64,6 +69,9 @@ export function DefaultTabBar({
   activeColor = '#111111',
   inactiveColor = '#888888',
   indicatorColor = '#111111',
+  pressColor,
+  pressOpacity,
+  android_ripple,
   style,
   tabStyle,
   labelStyle,
@@ -126,6 +134,17 @@ export function DefaultTabBar({
     return { opacity: 1, width, transform: [{ translateX: x }] };
   }, [tabNames.length]);
 
+  const itemStyle = [
+    styles.tab,
+    scrollable ? null : styles.tabFixed,
+    tabStyle,
+  ];
+  const rippleConfig =
+    pressColor != null || android_ripple != null
+      ? { color: pressColor, ...android_ripple }
+      : undefined;
+  const rippleActive = Platform.OS === 'android' && rippleConfig != null;
+
   const items = tabNames.map((name, i) => {
     const focused = i === activeIndex;
     const color = focused ? activeColor : inactiveColor;
@@ -136,7 +155,15 @@ export function DefaultTabBar({
         accessibilityRole="tab"
         accessibilityState={{ selected: focused }}
         accessibilityLabel={label}
-        style={[styles.tab, scrollable ? null : styles.tabFixed, tabStyle]}
+        android_ripple={rippleConfig}
+        style={
+          pressOpacity == null || rippleActive
+            ? itemStyle
+            : ({ pressed }) => [
+                ...itemStyle,
+                pressed ? { opacity: pressOpacity } : null,
+              ]
+        }
         onLayout={(e) => onItemLayout(i, e)}
         onPress={() => onTabPress(name)}
       >
