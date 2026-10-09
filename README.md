@@ -269,7 +269,7 @@ All of them, plus the games and the other open-source libraries, are at
 
 If one of these saved you an afternoon, there is a tip jar:
 
-<a href="https://www.buymeacoffee.com/scannertechs"><img src="https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20tea&emoji=%E2%98%95&slug=scannertechs&button_colour=FFDD00&font_colour=000000&font_family=Poppins&outline_colour=000000&coffee_colour=ffffff" alt="Buy me a tea" height="44" /></a>
+<a href="https://www.buymeacoffee.com/scannertechs"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me a Coffee" width="217" height="60" /></a>
 
 <!-- Add new projects as lines above. The ?ref= says which repo someone came
      from; it is only a URL parameter, nothing is tracked. -->
