@@ -254,3 +254,22 @@ Use `ahead`/`behind` ≥ 1 so the swipe target is already live before the gestur
 ## License
 
 MIT
+
+## More from Scanner Techs
+
+Small apps, mostly for people who wanted one thing to work properly:
+
+- **Nap** — screensavers for the Mac. Six scenes, twelve styles.
+- **StayUp** — keeps your Mac or PC awake, and you. Also in Teams and Slack.
+- **Snap Here** — code snippets into shareable images.
+- **Scanner Techs Tools** — browser-native dev utilities. Nothing leaves the tab.
+
+All of them, plus the games and the other open-source libraries, are at
+**[scannertechs.com](https://scannertechs.com/?ref=react-native-collapsible-tab)**.
+
+If one of these saved you an afternoon, there is a tip jar:
+
+<a href="https://www.buymeacoffee.com/scannertechs"><img src="https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20tea&emoji=%E2%98%95&slug=scannertechs&button_colour=FFDD00&font_colour=000000&font_family=Poppins&outline_colour=000000&coffee_colour=ffffff" alt="Buy me a tea" height="44" /></a>
+
+<!-- Add new projects as lines above. The ?ref= says which repo someone came
+     from; it is only a URL parameter, nothing is tracked. -->
