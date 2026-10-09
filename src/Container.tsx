@@ -5,6 +5,7 @@ import React, {
   useCallback,
   useEffect,
   useImperativeHandle,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -12,6 +13,8 @@ import React, {
   type ReactNode,
 } from 'react';
 import {
+  I18nManager,
+  Platform,
   StyleSheet,
   View,
   type LayoutChangeEvent,
@@ -23,6 +26,7 @@ import PagerView from 'react-native-pager-view';
 import Animated, {
   cancelAnimation,
   makeMutable,
+  runOnJS,
   runOnUI,
   scrollTo,
   useAnimatedStyle,
@@ -218,8 +222,14 @@ export const Container = forwardRef<CollapsingTabsRef, ContainerProps>(
       [namesKey],
     );
     const tabNamesRef = useRef(tabNames);
-    tabNamesRef.current = tabNames;
     const tabCount = tabNames.length;
+    // Keep iOS RTL paging consistent across pager-view versions.
+    const pagerDirection: string = pagerProps?.layoutDirection ?? 'locale';
+    const reversePager =
+      Platform.OS === 'ios' &&
+      pagerProps?.orientation !== 'vertical' &&
+      (pagerDirection === 'rtl' ||
+        (pagerDirection === 'locale' && I18nManager.isRTL));
 
     const tabLabels = useMemo(() => {
       const labels: Record<string, string> = {};
@@ -251,6 +261,8 @@ export const Container = forwardRef<CollapsingTabsRef, ContainerProps>(
 
     const activeIndexSV = useSharedValue(initialIndex);
     const pagerPosition = useSharedValue(initialIndex);
+    // Pause scroll updates during restore; null = idle, -1 = no pages.
+    const pagerRestoreTarget = useSharedValue<number | null>(null);
     const dragTarget = useSharedValue(0);
     const panStartOffset = useSharedValue(0);
     const focusedTab = useSharedValue(tabNames[initialIndex] ?? '');
@@ -260,6 +272,18 @@ export const Container = forwardRef<CollapsingTabsRef, ContainerProps>(
     const [activeIndex, setActiveIndex] = useState(initialIndex);
     const activeIndexRef = useRef(initialIndex);
     const pagerRef = useRef<PagerView>(null);
+    const pagerMappingRef = useRef({
+      tabCount,
+      tabNames,
+      reversePager,
+      ready: false,
+    });
+    // Ignore stale selections until the requested native page is confirmed.
+    const pagerTargetRef = useRef<{
+      nativeIndex: number;
+      restoring: boolean;
+    } | null>(null);
+    const nativePageRef = useRef(-1);
     const listRefs = useRef(new Map<number, TabListHandle>());
     const scrollRefs = useRef(new Map<number, TabScrollRef>());
 
@@ -404,10 +428,22 @@ export const Container = forwardRef<CollapsingTabsRef, ContainerProps>(
         // only mount the destination (intermediates stay lazy placeholders).
         for (let i = lo; i <= hi; i++) syncTab(i);
         mountTab(index);
-        if (animated) pagerRef.current?.setPage(index);
-        else pagerRef.current?.setPageWithoutAnimation(index);
+        const nativeIndex = reversePager
+          ? tabNamesRef.current.length - 1 - index
+          : index;
+        const alreadySelected =
+          pagerTargetRef.current === null &&
+          nativePageRef.current === nativeIndex;
+        if (pagerTargetRef.current) {
+          pagerTargetRef.current = { nativeIndex, restoring: false };
+        }
+        pagerRestoreTarget.value = null;
+        // Pager-view 8 may not confirm same-page requests.
+        if (!alreadySelected) nativePageRef.current = -1;
+        if (animated) pagerRef.current?.setPage(nativeIndex);
+        else pagerRef.current?.setPageWithoutAnimation(nativeIndex);
       },
-      [syncTab, mountTab],
+      [syncTab, mountTab, reversePager, pagerRestoreTarget],
     );
 
     const onTabPress = useCallback(
@@ -418,9 +454,33 @@ export const Container = forwardRef<CollapsingTabsRef, ContainerProps>(
       [goToIndex],
     );
 
+    // Settled scroll events can confirm restores without onPageSelected.
+    const clearPagerTarget = useCallback((nativeIndex: number) => {
+      if (pagerTargetRef.current?.nativeIndex === nativeIndex) {
+        pagerTargetRef.current = null;
+        nativePageRef.current = nativeIndex;
+      }
+    }, []);
+
     const handlePageSelected = useCallback(
       (e: { nativeEvent: { position: number } }) => {
-        const index = e.nativeEvent.position;
+        const nativeIndex = e.nativeEvent.position;
+        const count = tabNamesRef.current.length;
+        if (nativeIndex < 0 || nativeIndex >= count) return;
+        const index = pagerMappingRef.current.reversePager
+          ? count - 1 - nativeIndex
+          : nativeIndex;
+        const target = pagerTargetRef.current;
+        // Tab mutations can report indices from the previous page order.
+        if (target && nativeIndex !== target.nativeIndex) {
+          if (target.restoring) {
+            pagerRef.current?.setPageWithoutAnimation(target.nativeIndex);
+          }
+          return;
+        }
+        pagerTargetRef.current = null;
+        pagerRestoreTarget.value = null;
+        nativePageRef.current = nativeIndex;
         const prevIndex = activeIndexRef.current;
         syncTab(index);
         mountTab(index);
@@ -439,12 +499,22 @@ export const Container = forwardRef<CollapsingTabsRef, ContainerProps>(
           });
         }
       },
-      [syncTab, mountTab, activeIndexSV, focusedTab, onIndexChange, onTabChange],
+      [
+        syncTab,
+        mountTab,
+        activeIndexSV,
+        focusedTab,
+        onIndexChange,
+        onTabChange,
+        pagerRestoreTarget,
+      ],
     );
 
     const handlePageScrollStateChanged = useCallback(
       (e: { nativeEvent: { pageScrollState: string } }) => {
         if (e.nativeEvent.pageScrollState === 'dragging') {
+          pagerTargetRef.current = null;
+          pagerRestoreTarget.value = null;
           const current = activeIndexRef.current;
           syncTab(current - 1);
           syncTab(current + 1);
@@ -453,31 +523,106 @@ export const Container = forwardRef<CollapsingTabsRef, ContainerProps>(
           mountTab(current + 1);
         }
       },
-      [syncTab, mountTab],
+      [syncTab, mountTab, pagerRestoreTarget],
     );
 
     // Keep state consistent when tabs are added/removed at runtime.
-    useEffect(() => {
-      if (tabCount === 0) return;
+    useLayoutEffect(() => {
+      const previous = pagerMappingRef.current;
+      const pagerModeChanged = previous.reversePager !== reversePager;
+      const pagerMounted = ready && !previous.ready;
+      const tabCountChanged = previous.tabCount !== tabCount;
+      const pagesReordered = previous.tabNames.some((name, index) => {
+        const nextIndex = tabNames.indexOf(name);
+        return nextIndex >= 0 && nextIndex !== index;
+      });
+      // Child layout effects still see the previous tab mapping.
+      tabNamesRef.current = tabNames;
+      pagerMappingRef.current = { tabCount, tabNames, reversePager, ready };
+      if (pagerMounted) {
+        // Seed the native page before the first selection event.
+        const initialPage = reversePager
+          ? tabCount - 1 - initialIndex
+          : initialIndex;
+        nativePageRef.current =
+          initialPage >= 0 && initialPage < tabCount ? initialPage : -1;
+      }
+      if (tabCount === 0) {
+        pagerTargetRef.current = { nativeIndex: -1, restoring: true };
+        pagerRestoreTarget.value = -1;
+        pagerPosition.value = 0;
+        return;
+      }
       const current = activeIndexRef.current;
       if (current >= tabCount) {
         const clamped = tabCount - 1;
+        syncTab(clamped);
+        mountTab(clamped);
         activeIndexRef.current = clamped;
         activeIndexSV.value = clamped;
         setActiveIndex(clamped);
-        pagerRef.current?.setPageWithoutAnimation(clamped);
+      }
+      // Set the guard before queued native events arrive.
+      if (
+        (reversePager && (tabCountChanged || pagesReordered)) ||
+        (tabCountChanged && previous.tabCount === 0) ||
+        (pagerMounted && pagerTargetRef.current?.restoring) ||
+        (pagerTargetRef.current !== null &&
+          pagerTargetRef.current.nativeIndex >= tabCount) ||
+        pagerModeChanged ||
+        current >= tabCount
+      ) {
+        const index = activeIndexRef.current;
+        const nativeIndex = reversePager ? tabCount - 1 - index : index;
+        const alreadySelected =
+          pagerTargetRef.current === null &&
+          nativePageRef.current === nativeIndex;
+        if (!alreadySelected) {
+          pagerTargetRef.current = { nativeIndex, restoring: true };
+          pagerRestoreTarget.value = nativeIndex;
+          nativePageRef.current = -1;
+        }
+        pagerPosition.value = index;
+        // Redraw removed pages even when the native index is unchanged.
+        pagerRef.current?.setPageWithoutAnimation(nativeIndex);
       }
       focusedTab.value = tabNames[activeIndexRef.current] ?? '';
-    }, [tabCount, tabNames, activeIndexSV, focusedTab]);
+    }, [
+      tabCount,
+      tabNames,
+      activeIndexSV,
+      focusedTab,
+      reversePager,
+      pagerPosition,
+      pagerRestoreTarget,
+      syncTab,
+      mountTab,
+      ready,
+    ]);
 
     const pagerScrollHandler = usePagerScrollHandler(
       {
         onPageScroll: (e) => {
           'worklet';
-          pagerPosition.value = e.position + e.offset;
+          const restoreTarget = pagerRestoreTarget.value;
+          if (restoreTarget !== null) {
+            if (e.position !== restoreTarget || e.offset !== 0) return;
+            pagerRestoreTarget.value = null;
+            runOnJS(clearPagerTarget)(restoreTarget);
+          }
+          const nativePosition = e.position + e.offset;
+          pagerPosition.value = reversePager
+            ? tabCount - 1 - nativePosition
+            : nativePosition;
         },
       },
-      [pagerPosition],
+      [
+        pagerPosition,
+        reversePager,
+        tabCount,
+        pagerRestoreTarget,
+        clearPagerTarget,
+      ],
     );
 
     useImperativeHandle(
@@ -653,9 +798,14 @@ export const Container = forwardRef<CollapsingTabsRef, ContainerProps>(
               <AnimatedPagerView
                 {...pagerProps}
                 ref={pagerRef}
+                layoutDirection={
+                  reversePager ? 'ltr' : pagerProps?.layoutDirection
+                }
                 style={[styles.pager, pagerProps?.style]}
                 scrollEnabled={pagerScrollEnabled}
-                initialPage={initialIndex}
+                initialPage={
+                  reversePager ? tabCount - 1 - initialIndex : initialIndex
+                }
                 // useEvent returns a worklet handler the static prop types don't know about
                 onPageScroll={
                   pagerScrollHandler as unknown as React.ComponentProps<
@@ -665,11 +815,18 @@ export const Container = forwardRef<CollapsingTabsRef, ContainerProps>(
                 onPageSelected={handlePageSelected}
                 onPageScrollStateChanged={handlePageScrollStateChanged}
               >
-                {tabChildren.map((child, i) => {
-                  const { name, lazy: tabLazy, children: tabContent } =
-                    child.props;
-                  const mount =
-                    !(tabLazy ?? lazy) || mountedTabs.has(name);
+                {Array.from({ length: tabCount }, (_, nativeIndex) => {
+                  // Keep tab state in logical order.
+                  const i = reversePager
+                    ? tabCount - 1 - nativeIndex
+                    : nativeIndex;
+                  const child = tabChildren[i]!;
+                  const {
+                    name,
+                    lazy: tabLazy,
+                    children: tabContent,
+                  } = child.props;
+                  const mount = !(tabLazy ?? lazy) || mountedTabs.has(name);
                   const inWindow =
                     !windowed ||
                     (i <= activeIndex
