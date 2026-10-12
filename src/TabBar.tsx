@@ -116,14 +116,26 @@ export function DefaultTabBar({
     // must return the same keys. The hidden branch usually runs first (layouts
     // arrive async after mount); if it only set opacity, width/transform would
     // never join the set and the indicator would stay zero-width — invisible.
-    const hidden = { opacity: 0, width: 0, transform: [{ translateX: 0 }] };
+    const hidden = { opacity: 0, width: 0, left: 0, transform: [{ translateX: 0 }] };
     const layouts = layoutsSV.value;
     const count = tabNames.length;
+    if (count === 0) return hidden;
+    const pos = Math.min(Math.max(indexDecimal.value, 0), count - 1);
+    // Fixed tabs share their row equally. Percentages resolve during native
+    // layout, so the indicator is visible before any onLayout callbacks arrive
+    // and stays proportional when the row resizes.
+    if (!scrollable) {
+      return {
+        opacity: 1,
+        width: `${100 / count}%` as `${number}%`,
+        left: `${(pos * 100) / count}%` as `${number}%`,
+        transform: [{ translateX: 0 }],
+      };
+    }
     if (layouts.length < count) return hidden;
     for (let i = 0; i < count; i++) {
       if (!layouts[i]) return hidden;
     }
-    const pos = Math.min(Math.max(indexDecimal.value, 0), count - 1);
     const i0 = Math.floor(pos);
     const i1 = Math.min(i0 + 1, count - 1);
     const fraction = pos - i0;
@@ -131,8 +143,8 @@ export function DefaultTabBar({
     const l1 = layouts[i1] as TabLayout;
     const x = l0.x + (l1.x - l0.x) * fraction;
     const width = l0.width + (l1.width - l0.width) * fraction;
-    return { opacity: 1, width, transform: [{ translateX: x }] };
-  }, [tabNames.length]);
+    return { opacity: 1, width, left: 0, transform: [{ translateX: x }] };
+  }, [tabNames.length, scrollable]);
 
   const itemStyle = [
     styles.tab,
@@ -164,7 +176,7 @@ export function DefaultTabBar({
                 pressed ? { opacity: pressOpacity } : null,
               ]
         }
-        onLayout={(e) => onItemLayout(i, e)}
+        onLayout={scrollable ? (e) => onItemLayout(i, e) : undefined}
         onPress={() => onTabPress(name)}
       >
         {renderLabel ? (
