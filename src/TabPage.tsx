@@ -5,6 +5,7 @@ import {
   useAnimatedRef,
 } from 'react-native-reanimated';
 import type Animated from 'react-native-reanimated';
+import { USE_REANIMATED_DEPENDENCIES } from './reanimatedCompat';
 import {
   TabPageContext,
   useCollapsingTabsContext,
@@ -70,7 +71,7 @@ export function TabPage({
       if (Math.round(activeIndexSV.value) !== index) return;
       scrollTo(scrollRef, 0, target, false);
     },
-    [index],
+    USE_REANIMATED_DEPENDENCIES ? [index] : undefined,
   );
 
   // Collapse rule, applied to scroll deltas of the active tab only:
@@ -100,7 +101,9 @@ export function TabPage({
         }
       }
     },
-    [index, offsets, revealHeaderOnScroll],
+    USE_REANIMATED_DEPENDENCIES
+      ? [index, offsets, revealHeaderOnScroll]
+      : undefined,
   );
 
   const value = useMemo<TabPageContextValue>(

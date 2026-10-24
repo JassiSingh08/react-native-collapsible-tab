@@ -17,6 +17,7 @@ import Animated, {
   useSharedValue,
   type SharedValue,
 } from 'react-native-reanimated';
+import { USE_REANIMATED_DEPENDENCIES } from './reanimatedCompat';
 
 type TabLayout = { x: number; width: number };
 
@@ -111,28 +112,31 @@ export function DefaultTabBar({
     });
   }, [activeIndex, scrollable, barWidth]);
 
-  const indicatorStyle = useAnimatedStyle(() => {
-    // Reanimated locks the animated prop set on the first eval, so every branch
-    // must return the same keys. The hidden branch usually runs first (layouts
-    // arrive async after mount); if it only set opacity, width/transform would
-    // never join the set and the indicator would stay zero-width — invisible.
-    const hidden = { opacity: 0, width: 0, transform: [{ translateX: 0 }] };
-    const layouts = layoutsSV.value;
-    const count = tabNames.length;
-    if (layouts.length < count) return hidden;
-    for (let i = 0; i < count; i++) {
-      if (!layouts[i]) return hidden;
-    }
-    const pos = Math.min(Math.max(indexDecimal.value, 0), count - 1);
-    const i0 = Math.floor(pos);
-    const i1 = Math.min(i0 + 1, count - 1);
-    const fraction = pos - i0;
-    const l0 = layouts[i0] as TabLayout;
-    const l1 = layouts[i1] as TabLayout;
-    const x = l0.x + (l1.x - l0.x) * fraction;
-    const width = l0.width + (l1.width - l0.width) * fraction;
-    return { opacity: 1, width, transform: [{ translateX: x }] };
-  }, [tabNames.length]);
+  const indicatorStyle = useAnimatedStyle(
+    () => {
+      // Reanimated locks the animated prop set on the first eval, so every branch
+      // must return the same keys. The hidden branch usually runs first (layouts
+      // arrive async after mount); if it only set opacity, width/transform would
+      // never join the set and the indicator would stay zero-width — invisible.
+      const hidden = { opacity: 0, width: 0, transform: [{ translateX: 0 }] };
+      const layouts = layoutsSV.value;
+      const count = tabNames.length;
+      if (layouts.length < count) return hidden;
+      for (let i = 0; i < count; i++) {
+        if (!layouts[i]) return hidden;
+      }
+      const pos = Math.min(Math.max(indexDecimal.value, 0), count - 1);
+      const i0 = Math.floor(pos);
+      const i1 = Math.min(i0 + 1, count - 1);
+      const fraction = pos - i0;
+      const l0 = layouts[i0] as TabLayout;
+      const l1 = layouts[i1] as TabLayout;
+      const x = l0.x + (l1.x - l0.x) * fraction;
+      const width = l0.width + (l1.width - l0.width) * fraction;
+      return { opacity: 1, width, transform: [{ translateX: x }] };
+    },
+    USE_REANIMATED_DEPENDENCIES ? [tabNames.length] : undefined,
+  );
 
   const itemStyle = [
     styles.tab,

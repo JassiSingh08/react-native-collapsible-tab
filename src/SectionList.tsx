@@ -13,6 +13,7 @@ import type {
   SectionListProps,
 } from 'react-native';
 import Animated, { useAnimatedScrollHandler } from 'react-native-reanimated';
+import { USE_REANIMATED_DEPENDENCIES } from './reanimatedCompat';
 import {
   useCollapsingTabsContext,
   useTabPageContext,
@@ -74,7 +75,9 @@ function TabSectionListInner<ItemT, SectionT = DefaultSectionT>(
         maybeSnap();
       },
     },
-    [offsets, index, cancelHeaderAnimations, maybeSnap],
+    USE_REANIMATED_DEPENDENCIES
+      ? [offsets, index, cancelHeaderAnimations, maybeSnap]
+      : undefined,
   );
 
   const setRefs = useCallback(

@@ -18,6 +18,7 @@ import Animated, {
   useScrollViewOffset,
 } from 'react-native-reanimated';
 import * as Reanimated from 'react-native-reanimated';
+import { USE_REANIMATED_DEPENDENCIES } from './reanimatedCompat';
 import {
   useCollapsingTabsContext,
   useTabPageContext,
@@ -163,7 +164,7 @@ function TabFlashListInner<ItemT>(
       const sv = offsets[index];
       if (sv) sv.value = value;
     },
-    [offsets, index],
+    USE_REANIMATED_DEPENDENCIES ? [offsets, index] : undefined,
   );
 
   const lifecycle = useTabScrollLifecycle({});

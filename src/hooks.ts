@@ -1,4 +1,5 @@
 import { useDerivedValue, type SharedValue } from 'react-native-reanimated';
+import { USE_REANIMATED_DEPENDENCIES } from './reanimatedCompat';
 import {
   useActiveTabContext,
   useCollapsingTabsContext,
@@ -14,16 +15,22 @@ import {
  */
 export function useHeaderScrollY(): SharedValue<number> {
   const { collapse } = useCollapsingTabsContext();
-  return useDerivedValue(() => collapse.value, [collapse]);
+  return useDerivedValue(
+    () => collapse.value,
+    USE_REANIMATED_DEPENDENCIES ? [collapse] : undefined,
+  );
 }
 
 /** Header collapse normalized to 0 (expanded) .. 1 (collapsed). */
 export function useCollapseProgress(): SharedValue<number> {
   const { collapse, collapseRangeSV } = useCollapsingTabsContext();
-  return useDerivedValue(() => {
-    const range = collapseRangeSV.value;
-    return range > 0 ? Math.min(collapse.value / range, 1) : 0;
-  }, [collapse, collapseRangeSV]);
+  return useDerivedValue(
+    () => {
+      const range = collapseRangeSV.value;
+      return range > 0 ? Math.min(collapse.value / range, 1) : 0;
+    },
+    USE_REANIMATED_DEPENDENCIES ? [collapse, collapseRangeSV] : undefined,
+  );
 }
 
 /**
@@ -39,7 +46,7 @@ export function useHeaderMeasurements(): {
     useCollapsingTabsContext();
   const top = useDerivedValue(
     () => -Math.min(collapse.value, collapseRangeSV.value),
-    [collapse, collapseRangeSV],
+    USE_REANIMATED_DEPENDENCIES ? [collapse, collapseRangeSV] : undefined,
   );
   return { top, height: headerHeight };
 }
@@ -51,7 +58,10 @@ export function useHeaderMeasurements(): {
 export function useCurrentTabScrollY(): SharedValue<number> {
   const { offsets } = useCollapsingTabsContext();
   const { index } = useTabPageContext();
-  return useDerivedValue(() => offsets[index]?.value ?? 0, [offsets, index]);
+  return useDerivedValue(
+    () => offsets[index]?.value ?? 0,
+    USE_REANIMATED_DEPENDENCIES ? [offsets, index] : undefined,
+  );
 }
 
 /**
@@ -60,22 +70,31 @@ export function useCurrentTabScrollY(): SharedValue<number> {
  */
 export function useActiveTabScrollY(): SharedValue<number> {
   const { offsets, activeIndexSV } = useCollapsingTabsContext();
-  return useDerivedValue(() => {
-    const sv = offsets[Math.round(activeIndexSV.value)];
-    return sv ? sv.value : 0;
-  }, [offsets, activeIndexSV]);
+  return useDerivedValue(
+    () => {
+      const sv = offsets[Math.round(activeIndexSV.value)];
+      return sv ? sv.value : 0;
+    },
+    USE_REANIMATED_DEPENDENCIES ? [offsets, activeIndexSV] : undefined,
+  );
 }
 
 /** Name of the focused tab as a shared value (updates on tab settle). */
 export function useFocusedTab(): SharedValue<string> {
   const { focusedTab } = useCollapsingTabsContext();
-  return useDerivedValue(() => focusedTab.value, [focusedTab]);
+  return useDerivedValue(
+    () => focusedTab.value,
+    USE_REANIMATED_DEPENDENCIES ? [focusedTab] : undefined,
+  );
 }
 
 /** Continuous pager position (fractional during swipes) as a shared value. */
 export function useAnimatedTabIndex(): SharedValue<number> {
   const { pagerPosition } = useCollapsingTabsContext();
-  return useDerivedValue(() => pagerPosition.value, [pagerPosition]);
+  return useDerivedValue(
+    () => pagerPosition.value,
+    USE_REANIMATED_DEPENDENCIES ? [pagerPosition] : undefined,
+  );
 }
 
 /** JS-state focus check for the named tab (re-renders on tab switch). */

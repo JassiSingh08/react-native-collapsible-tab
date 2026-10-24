@@ -9,6 +9,7 @@ import {
 } from 'react';
 import type { FlatList, FlatListProps } from 'react-native';
 import Animated, { useAnimatedScrollHandler } from 'react-native-reanimated';
+import { USE_REANIMATED_DEPENDENCIES } from './reanimatedCompat';
 import {
   useCollapsingTabsContext,
   useTabPageContext,
@@ -53,7 +54,9 @@ function TabFlatListInner<ItemT>(
         maybeSnap();
       },
     },
-    [offsets, index, cancelHeaderAnimations, maybeSnap],
+    USE_REANIMATED_DEPENDENCIES
+      ? [offsets, index, cancelHeaderAnimations, maybeSnap]
+      : undefined,
   );
 
   const setRefs = useCallback(

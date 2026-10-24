@@ -1,6 +1,7 @@
 import { useCallback, useEffect, type ComponentProps } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import Animated, { useAnimatedScrollHandler } from 'react-native-reanimated';
+import { USE_REANIMATED_DEPENDENCIES } from './reanimatedCompat';
 import {
   useCollapsingTabsContext,
   useTabPageContext,
@@ -46,7 +47,9 @@ export function TabScrollView({
         maybeSnap();
       },
     },
-    [offsets, index, cancelHeaderAnimations, maybeSnap],
+    USE_REANIMATED_DEPENDENCIES
+      ? [offsets, index, cancelHeaderAnimations, maybeSnap]
+      : undefined,
   );
 
   const scrollToOffset = useCallback(
