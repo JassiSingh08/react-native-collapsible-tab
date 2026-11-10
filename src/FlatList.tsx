@@ -14,7 +14,11 @@ import {
   useTabPageContext,
   type TabListHandle,
 } from './context';
-import { useRestoreTabOffset, useTabContentStyle } from './adapterUtils';
+import {
+  useRefreshScrollRef,
+  useRestoreTabOffset,
+  useTabContentStyle,
+} from './adapterUtils';
 
 export type TabFlatListProps<ItemT> = Omit<FlatListProps<ItemT>, 'onScroll'>;
 
@@ -66,6 +70,15 @@ function TabFlatListInner<ItemT>(
     },
     [scrollRef, ref],
   );
+
+  const syncScrollRef = useCallback(() => {
+    // Re-passing the instance makes Reanimated resolve the new native scroller.
+    (scrollRef as unknown as (node: FlatList<ItemT> | null) => void)(
+      scrollRef.current as unknown as FlatList<ItemT> | null,
+    );
+  }, [scrollRef]);
+
+  useRefreshScrollRef(syncScrollRef, rest);
 
   useEffect(() => {
     const handle: TabListHandle = {

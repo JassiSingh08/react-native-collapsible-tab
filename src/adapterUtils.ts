@@ -92,6 +92,22 @@ export function useTabScrollLifecycle(user: UserScrollHandlers) {
   return { onScrollBeginDrag, onScrollEndDrag, onMomentumScrollEnd };
 }
 
+/** Rebinds list refs when refresh replaces the native scroller. */
+export function useRefreshScrollRef(
+  syncScrollRef: () => void,
+  {
+    onRefresh,
+    refreshControl,
+  }: { onRefresh?: unknown; refreshControl?: unknown },
+) {
+  const hasRefreshControl = onRefresh != null || refreshControl != null;
+
+  useEffect(() => {
+    // The outer list survives this transition, so its ref callback does not run.
+    syncScrollRef();
+  }, [hasRefreshControl, syncScrollRef]);
+}
+
 /**
  * Restores a tab's saved scroll offset when its list mounts. Needed for lazy
  * tabs: syncTab may have written this tab's offset (so the header/content

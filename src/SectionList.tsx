@@ -2,6 +2,7 @@ import {
   forwardRef,
   useCallback,
   useEffect,
+  useRef,
   type MutableRefObject,
   type ReactElement,
   type Ref,
@@ -18,7 +19,11 @@ import {
   useTabPageContext,
   type TabListHandle,
 } from './context';
-import { useRestoreTabOffset, useTabContentStyle } from './adapterUtils';
+import {
+  useRefreshScrollRef,
+  useRestoreTabOffset,
+  useTabContentStyle,
+} from './adapterUtils';
 
 const AnimatedSectionList = Animated.createAnimatedComponent(
   SectionList,
@@ -29,8 +34,8 @@ export type TabSectionListProps<ItemT, SectionT = DefaultSectionT> = Omit<
   'onScroll'
 >;
 
-function scrollListTo(
-  list: SectionList<unknown, DefaultSectionT> | null,
+function scrollListTo<ItemT, SectionT>(
+  list: SectionList<ItemT, SectionT> | null,
   offset: number,
   animated: boolean,
 ) {
@@ -56,6 +61,7 @@ function TabSectionListInner<ItemT, SectionT = DefaultSectionT>(
     maybeSnap,
   } = useCollapsingTabsContext();
   const { index, scrollRef } = useTabPageContext();
+  const listRef = useRef<SectionList<ItemT, SectionT> | null>(null);
 
   const scrollHandler = useAnimatedScrollHandler(
     {
@@ -77,51 +83,42 @@ function TabSectionListInner<ItemT, SectionT = DefaultSectionT>(
     [offsets, index, cancelHeaderAnimations, maybeSnap],
   );
 
+  const syncScrollRef = useCallback(() => {
+    // SectionList has no getNativeScrollRef, so hand Reanimated its inner ScrollView.
+    // Otherwise Android's RefreshControl wrapper can become the scroll target.
+    (scrollRef as unknown as (node: ScrollView | null) => void)(
+      listRef.current?.getScrollResponder() ?? null,
+    );
+  }, [scrollRef]);
+
   const setRefs = useCallback(
     (node: SectionList<ItemT, SectionT> | null) => {
-      (
-        scrollRef as unknown as (
-          node: SectionList<ItemT, SectionT> | null,
-        ) => void
-      )(node);
+      listRef.current = node;
+      syncScrollRef();
       if (typeof ref === 'function') ref(node);
       else if (ref)
         (ref as MutableRefObject<SectionList<ItemT, SectionT> | null>).current =
           node;
     },
-    [scrollRef, ref],
+    [syncScrollRef, ref],
   );
+
+  useRefreshScrollRef(syncScrollRef, rest);
+
+  const scrollToOffset = useCallback((offset: number, animated = false) => {
+    scrollListTo(listRef.current, offset, animated);
+  }, []);
 
   useEffect(() => {
     const handle: TabListHandle = {
       scrollToOffset: ({ offset, animated }) =>
-        scrollListTo(
-          scrollRef.current as unknown as SectionList<
-            unknown,
-            DefaultSectionT
-          > | null,
-          offset,
-          animated ?? false,
-        ),
+        scrollToOffset(offset, animated ?? false),
     };
     registerListRef(index, handle);
     return () => registerListRef(index, null);
-  }, [registerListRef, index, scrollRef]);
+  }, [registerListRef, index, scrollToOffset]);
 
-  useRestoreTabOffset(
-    useCallback(
-      (offset: number) =>
-        scrollListTo(
-          scrollRef.current as unknown as SectionList<
-            unknown,
-            DefaultSectionT
-          > | null,
-          offset,
-          false,
-        ),
-      [scrollRef],
-    ),
-  );
+  useRestoreTabOffset(scrollToOffset);
 
   const mergedContentStyle = useTabContentStyle(contentContainerStyle);
 

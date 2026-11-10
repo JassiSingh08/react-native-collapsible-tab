@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { StyleSheet, Switch, Text, View } from 'react-native';
 import { Tabs } from 'react-native-collapsible-tab';
 import { TabFlashList } from 'react-native-collapsible-tab/flash-list';
 import { TabLegendList } from 'react-native-collapsible-tab/legend-list';
@@ -68,14 +69,39 @@ export function LegendListExample() {
 }
 
 export function SectionListExample() {
+  const [refreshEnabled, setRefreshEnabled] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(() => setRefreshing(true), []);
+  const onRefreshEnabledChange = useCallback((enabled: boolean) => {
+    setRefreshing(false);
+    setRefreshEnabled(enabled);
+  }, []);
+
+  useEffect(() => {
+    if (!refreshing) return;
+    const timeout = setTimeout(() => setRefreshing(false), 750);
+    return () => clearTimeout(timeout);
+  }, [refreshing]);
+
   return (
     <Tabs.Container
       renderHeader={() => (
-        <ExampleHeader title="SectionList" subtitle="Sections with sticky headers" />
+        <ExampleHeader title="SectionList" subtitle="Sections with sticky headers">
+          <View style={styles.refreshOption}>
+            <Text style={styles.optionTitle}>Pull to refresh</Text>
+            <Switch
+              accessibilityLabel="Pull to refresh"
+              value={refreshEnabled}
+              onValueChange={onRefreshEnabledChange}
+            />
+          </View>
+        </ExampleHeader>
       )}
     >
       <Tabs.Tab name="sections" label="Sections">
         <Tabs.SectionList<Item>
+          refreshing={refreshEnabled ? refreshing : undefined}
+          onRefresh={refreshEnabled ? onRefresh : undefined}
           sections={sections}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <Row item={item} />}
@@ -88,6 +114,8 @@ export function SectionListExample() {
       </Tabs.Tab>
       <Tabs.Tab name="flat" label="Flat">
         <Tabs.FlatList<Item>
+          refreshing={refreshEnabled ? refreshing : undefined}
+          onRefresh={refreshEnabled ? onRefresh : undefined}
           data={makeItems(30)}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <Row item={item} />}
@@ -98,6 +126,14 @@ export function SectionListExample() {
 }
 
 const styles = StyleSheet.create({
+  refreshOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 12,
+    paddingVertical: 4,
+  },
+  optionTitle: { fontSize: 14, fontWeight: '600', color: '#111' },
   sectionHeader: {
     backgroundColor: '#f5f5f5',
     paddingHorizontal: 16,
