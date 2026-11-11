@@ -124,7 +124,7 @@ export function DefaultTabBar({
     const hidden = { opacity: 0, width: 0, transform: [{ translateX: 0 }] };
     const layouts = layoutsSV.value;
     const count = tabNames.length;
-    if (layouts.length < count || (isRTL && rowWidthSV.value <= 0)) return hidden;
+    if (count === 0 || layouts.length < count || (isRTL && rowWidthSV.value <= 0)) return hidden;
     for (let i = 0; i < count; i++) {
       if (!layouts[i]) return hidden;
     }
