@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  I18nManager,
   Platform,
   Pressable,
   ScrollView,
@@ -19,6 +20,8 @@ import Animated, {
 } from 'react-native-reanimated';
 
 type TabLayout = { x: number; width: number };
+
+const SCROLL_PADDING = 12;
 
 export type DefaultTabBarProps = {
   tabNames: string[];
@@ -82,6 +85,8 @@ export function DefaultTabBar({
   const layoutsSV = useSharedValue<TabLayout[]>([]);
   const layoutsJS = useRef<TabLayout[]>([]);
   const [barWidth, setBarWidth] = useState(0);
+  const isRTL = I18nManager.isRTL;
+  const rowWidthSV = useSharedValue(0);
 
   const onBarLayout = useCallback((e: LayoutChangeEvent) => {
     setBarWidth(e.nativeEvent.layout.width);
@@ -119,7 +124,7 @@ export function DefaultTabBar({
     const hidden = { opacity: 0, width: 0, transform: [{ translateX: 0 }] };
     const layouts = layoutsSV.value;
     const count = tabNames.length;
-    if (layouts.length < count) return hidden;
+    if (layouts.length < count || (isRTL && rowWidthSV.value <= 0)) return hidden;
     for (let i = 0; i < count; i++) {
       if (!layouts[i]) return hidden;
     }
@@ -129,10 +134,14 @@ export function DefaultTabBar({
     const fraction = pos - i0;
     const l0 = layouts[i0] as TabLayout;
     const l1 = layouts[i1] as TabLayout;
-    const x = l0.x + (l1.x - l0.x) * fraction;
     const width = l0.width + (l1.width - l0.width) * fraction;
-    return { opacity: 1, width, transform: [{ translateX: x }] };
-  }, [tabNames.length]);
+
+    //offset physical tab frames from the RTL anchor, including margins
+    const x = l0.x + (l1.x - l0.x) * fraction;
+    const translateX = isRTL ? x + width - rowWidthSV.value : x;
+
+    return { opacity: 1, width, transform: [{ translateX }] };
+  }, [tabNames.length, isRTL]);
 
   const itemStyle = [
     styles.tab,
@@ -207,12 +216,22 @@ export function DefaultTabBar({
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
+          onContentSizeChange={(width) => {
+            //measure the full row, including content beyond the viewport
+            rowWidthSV.value = width;
+          }}
         >
           {items}
           {indicator}
         </ScrollView>
       ) : (
-        <View style={styles.fixedRow}>
+        <View
+          style={styles.fixedRow}
+          onLayout={(e) => {
+            //measure the indicator's containing row
+            rowWidthSV.value = e.nativeEvent.layout.width;
+          }}
+        >
           {items}
           {indicator}
         </View>
@@ -227,7 +246,9 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E0E0E0',
   },
   scrollContent: {
-    paddingHorizontal: 12,
+    flexGrow: 1,
+    flexDirection: 'row',
+    paddingHorizontal: SCROLL_PADDING,
   },
   fixedRow: {
     flexDirection: 'row',
@@ -247,7 +268,7 @@ const styles = StyleSheet.create({
   indicator: {
     position: 'absolute',
     bottom: 0,
-    left: 0,
+    start: 0,
     height: 2,
     borderRadius: 1,
   },
